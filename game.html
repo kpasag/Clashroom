@@ -17,36 +17,37 @@
     <div id="navbar"></div>
 
     <!-- Main -->
-    <main class="flex mt-20 justify-center">
-      <section class="w-3/5">
-        <div
-          id="bingoDiv"
-          class="w-40 h-20 items-center flex justify-center bg-blue-400"
-        >
-          <h1 id="bingoScenario" class="font-sans">Bingo Card</h1>
+    <main class="flex flex-row justify-between max-w-7xl mx-auto mt-10">
+
+        <!-- LEFT SIDE: BINGO GRID -->
+        <div class="grid gap-x-16 gap-y-10 ml-10" id="boardContainer">
+            <!-- Tiles will be inserted by game.js -->
         </div>
-      </section>
-      <section class="flex flex-col gap-5 bg-blue-400 w-1/4 text-start">
-        <h1 class="pl-2 font-bold text-3xl border border-b-black">
-          Game ID: <span id="gameID">Room ID</span>
-        </h1>
-        <p class="pl-2 font-sans">
-          Current clashers: <span id="clashersCount">0</span>
-        </p>
-        <p class="pl-2 font-sans">
-          Clashes won: <span id="clashesWon">0</span>
-        </p>
-        <div class="mx-auto">
-          <button
-            class="bg-red-500 text-white mt-14 mb-5 py-4 px-8 rounded-2xl font-sans"
-          >
-            Stop Clash
-          </button>
+
+        <!-- RIGHT SIDE: GAME INFO PANEL -->
+        <div class="bg-[#C8F8F8] border border-gray-400 w-72 h-[380px] mr-10 p-6">
+            
+            <h2 class="text-xl font-bold mb-3 border-b-2 border-black pb-1">
+                Game ID: <span id="gameIdText">(Unique Room ID)</span>
+            </h2>
+
+            <p class="mt-4">Current clashers: <span id="playerCount">0</span></p>
+
+            <p class="mt-6">Clashes won: <span id="winsCount">0</span></p>
+
+            <div class="flex justify-center mt-16">
+                <button 
+                    id="stopBtn"
+                    class="bg-orange-500 hover:bg-orange-600 transition py-3 px-10 rounded-2xl text-white font-sans">
+                    Stop Clash
+                </button>
+            </div>
         </div>
-      </section>
+
     </main>
 
     <!-- Scripts -->
-    <script src="navbar.js"></script>
+    <script type="module" src="navbar.js"></script>
+    <script type="module" src="./src/game.js"></script>
   </body>
 </html>

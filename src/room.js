@@ -24,21 +24,23 @@ createBtn.addEventListener("click", async () => {
 
   selectedGrid = selectedGrid.id; // gridDifficult, gridNormal, gridEasy
 
-  // Build scenarios list
-  let scenarios = [];
-  if (checkbox.checked) {
-    scenarios = textarea.value
-      .split(",")
-      .map(x => x.trim())
-      .filter(Boolean);
-  } else {
-    scenarios = [
-      "Professor says 'as you can see'",
-      "Someone walks in late",
-      "Technical issues",
-      "Student asks a weird question"
+    // Always include default scenarios
+    let scenarios = [
+    "Professor says 'as you can see'",
+    "Someone walks in late",
+    "Technical issues",
+    "Student asks a weird question"
     ];
-  }
+
+    // If custom checkbox is checked, add more
+    if (checkbox.checked) {
+    const custom = textarea.value
+        .split(",")
+        .map(x => x.trim())
+        .filter(Boolean);
+
+    scenarios = scenarios.concat(custom);
+    }
 
   // Make room code
   const roomId = Math.floor(1000 + Math.random() * 9000).toString();

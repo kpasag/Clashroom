@@ -1,12 +1,13 @@
 import { db } from "./firebaseConfig.js";
 import {
   doc,
-  getDoc
+  getDoc,
+  collection,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// -------------------------------
-// 1. Load room info from URL
-// -------------------------------
+
+// Load rooms
 async function loadRoom() {
   const params = new URLSearchParams(window.location.search);
   const roomId = params.get("room");
@@ -16,7 +17,7 @@ async function loadRoom() {
     return;
   }
 
-  // Get room data
+  // Fetch room data from Firestore
   const roomRef = doc(db, "rooms", roomId);
   const roomSnap = await getDoc(roomRef);
 
@@ -27,18 +28,152 @@ async function loadRoom() {
 
   const data = roomSnap.data();
 
-  // Determine grid size
+  // Detect grid size from room document
   const gridSize =
     data.gridSize === "gridDifficult" ? 6 :
     data.gridSize === "gridNormal" ? 4 :
-    3; // gridEasy
+    3;
 
   generateBoard(data.phrases, gridSize);
+
+  // Start listening for player count
+  watchPlayerCount(roomId);
 }
 
 
-// -------------------------------
-// 2. Generate the bingo board
-// -------------------------------
+
+// Generate interactive board
 function generateBoard(phrases, gridSize) {
-  const container = docum
+  const container = document.getElementById("boardContainer");
+  container.innerHTML = "";
+  container.classList.add("font-sans");
+
+  // Create grid columns based on size
+  container.className = `grid gap-4 mx-auto mt-10 w-max grid-cols-${gridSize}`;
+
+  // Shuffle scenarios
+  const shuffled = [...phrases].sort(() => Math.random() - 0.5);
+  const countNeeded = gridSize * gridSize;
+  const selected = shuffled.slice(0, countNeeded);
+
+  selected.forEach((text) => {
+    const card = document.createElement("div");
+
+    card.className =
+      "bingo-card bg-blue-100 border border-blue-300 rounded-lg p-6 w-40 h-24 flex justify-center items-center text-center cursor-pointer transition hover:bg-blue-200";
+
+    card.innerText = text;
+
+    // Tile click handling
+    card.addEventListener("click", () => {
+      card.classList.toggle("selected");
+
+      // CLICK ANIMATION
+      card.classList.remove("animate-pop");
+      void card.offsetWidth; 
+      card.classList.add("animate-pop");
+
+      checkBingo(gridSize);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+
+
+// Selected tile CSS
+const styleSelected = document.createElement("style");
+styleSelected.innerHTML = `
+  .bingo-card.selected {
+      background-color: #86efac !important; 
+      text-decoration: line-through;
+      box-shadow: 0 0 10px rgba(34,197,94,0.7);
+      border-color: #22c55e;
+  }
+`;
+document.head.appendChild(styleSelected);
+
+
+
+// Card select animation
+const stylePop = document.createElement("style");
+stylePop.innerHTML = `
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  .animate-pop {
+    animation: pop 0.2s ease-out;
+  }
+`;
+document.head.appendChild(stylePop);
+
+
+
+// Check for Bingo
+function checkBingo(size) {
+  const cards = [...document.querySelectorAll(".bingo-card")];
+
+  // Create 2D array of selected tiles
+  const board = [];
+  for (let r = 0; r < size; r++) {
+    board[r] = [];
+    for (let c = 0; c < size; c++) {
+      const index = r * size + c;
+      board[r][c] = cards[index].classList.contains("selected");
+    }
+  }
+
+  // Check each row
+  for (let r = 0; r < size; r++) {
+    if (board[r].every(v => v)) {
+      alert("BINGO! (Row)");
+      return true;
+    }
+  }
+
+  // Check each column
+  for (let c = 0; c < size; c++) {
+    let col = true;
+    for (let r = 0; r < size; r++) {
+      if (!board[r][c]) col = false;
+    }
+    if (col) {
+      alert("BINGO! (Column)");
+      return true;
+    }
+  }
+
+  // Check diagonal TL → BR
+  if (board.every((row, i) => row[i])) {
+    alert("BINGO! (Diagonal)");
+    return true;
+  }
+
+  // Check diagonal TR → BL
+  if (board.every((row, i) => row[size - i - 1])) {
+    alert("BINGO! (Diagonal)");
+    return true;
+  }
+
+  return false;
+}
+
+
+
+// Player count
+function watchPlayerCount(roomId) {
+  const playersRef = collection(db, "rooms", roomId, "players");
+  const output = document.getElementById("playerCount");
+
+  onSnapshot(playersRef, (snapshot) => {
+    output.innerText = ` ${snapshot.size}`;
+  });
+}
+
+
+
+loadRoom();
