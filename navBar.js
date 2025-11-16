@@ -1,4 +1,6 @@
 document.getElementById("navbar").innerHTML = `
-<div class="flex justify-center py-3 bg-green-400">
-    <h1 class="font-extrabold">Clashroom</h1>
+  <div class="flex justify-center py-3 bg-pink-400">
+    <a href="index.html">
+      <img alt="ClashRoom full logo" src="./images/ClashRoomFullLogo.png" class="max-w-lg max-h-lg" />
+    </a>
   </div>`;
