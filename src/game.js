@@ -11,29 +11,8 @@ import {
 let isTerminating = false;
 let hasRedirected = false;
 
-/* ============================================================
-   CUSTOM ALERT (UI MODAL)
-============================================================ */
-function showCustomAlert(title, message, callback) {
-  const modal = document.getElementById("customAlert");
-  const alertTitle = document.getElementById("alertTitle");
-  const alertMsg = document.getElementById("alertMsg");
-  const alertBtn = document.getElementById("alertBtn");
+// End the room
 
-  alertTitle.innerText = title;
-  alertMsg.innerText = message;
-
-  modal.classList.remove("hidden");
-
-  alertBtn.onclick = () => {
-    modal.classList.add("hidden");
-    if (callback) callback();
-  };
-}
-
-/* ============================================================
-   End the room (win or stop)
-============================================================ */
 async function terminateRoom() {
   const params = new URLSearchParams(window.location.search);
   const roomId = params.get("room");
@@ -44,9 +23,13 @@ async function terminateRoom() {
   const roomRef = doc(db, "rooms", roomId);
   isTerminating = true;
 
-  await setDoc(roomRef, { winner: playerName, status: "closed" }, { merge: true });
+  await setDoc(
+    roomRef,
+    { winner: playerName, status: "closed" },
+    { merge: true }
+  );
 
-  // delete room after 3s
+  // Wait 3 seconds before deleting
   setTimeout(async () => {
     try {
       await deleteDoc(roomRef);
@@ -57,53 +40,39 @@ async function terminateRoom() {
 
   if (!hasRedirected) {
     hasRedirected = true;
-    showCustomAlert("🎉 Victory!", "Bingo! You have won the clash!", () => {
-      window.location.href = "index.html";
-    });
+    alert("Bingo! You have Won");
+    window.location.href = "index.html";
   }
 }
 
-/* ============================================================
-   Watch if room is deleted or winner appears
-============================================================ */
+// Check if room deleted or someone wins
+
 function watchRoomExistence(roomId) {
   const roomRef = doc(db, "rooms", roomId);
 
   onSnapshot(roomRef, (snapshot) => {
-    // room deleted → you lost
     if (!snapshot.exists()) {
       if (!isTerminating && !hasRedirected) {
         hasRedirected = true;
-        showCustomAlert("😢 You Lost", "The host closed the room.", () => {
-          window.location.href = "index.html";
-        });
+        alert("You lost!");
+        window.location.href = "index.html";
       }
       return;
     }
 
-    // someone won
     const data = snapshot.data();
     if (data?.winner && !isTerminating && !hasRedirected) {
       hasRedirected = true;
-      showCustomAlert(
-        "😢 You Lost",
-        `${data.winner} won the clash.`,
-        () => {
-          window.location.href = "index.html";
-        }
-      );
+      alert(`You lost! ${data.winner} won.`);
+      window.location.href = "index.html";
     }
   });
 }
 
-/* ============================================================
-   Load room
-============================================================ */
+// Load room
 async function loadRoom(roomId) {
   if (!roomId) {
-    showCustomAlert("Error", "Room ID missing.", () => {
-      window.location.href = "index.html";
-    });
+    alert("Room ID missing.");
     return;
   }
 
@@ -113,9 +82,8 @@ async function loadRoom(roomId) {
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) {
-    showCustomAlert("Error", "Room not found!", () => {
-      window.location.href = "index.html";
-    });
+    alert("Room not found!");
+    window.location.href = "index.html";
     return;
   }
 
@@ -133,14 +101,12 @@ async function loadRoom(roomId) {
   watchRoomExistence(roomId);
 }
 
-/* ============================================================
-   Generate Bingo Grid
-============================================================ */
+// Generate board
 function generateBoard(phrases, gridSize) {
   const container = document.getElementById("boardContainer");
   container.innerHTML = "";
   container.className = "grid gap-4 mx-auto mt-10 w-max font-sans";
-  container.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+  container.style.gridTemplateColumns = `repeat(${gridSize}, minmax(0, 1fr))`;
 
   const shuffled = [...phrases].sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, gridSize * gridSize);
@@ -148,14 +114,13 @@ function generateBoard(phrases, gridSize) {
   selected.forEach((text) => {
     const card = document.createElement("div");
     card.className =
-      "bingo-card bg-blue-100 border border-blue-300 rounded-lg p-6 flex justify-center items-center text-center cursor-pointer transition hover:bg-blue-200";
+      "bingo-card bg-blue-100 border border-blue-300 rounded-lg p-6 w-44 h-44 flex justify-center items-center text-center cursor-pointer transition hover:bg-blue-200";
     card.innerText = text;
 
     card.addEventListener("click", () => {
       if (isTerminating) return;
 
       card.classList.toggle("selected");
-
       card.classList.remove("animate-pop");
       void card.offsetWidth;
       card.classList.add("animate-pop");
@@ -167,9 +132,7 @@ function generateBoard(phrases, gridSize) {
   });
 }
 
-/* ============================================================
-   Bingo Checker
-============================================================ */
+// Bingo checker
 function checkBingo(size) {
   const cards = [...document.querySelectorAll(".bingo-card")];
   const board = [];
@@ -191,9 +154,7 @@ function checkBingo(size) {
   }
 }
 
-/* ============================================================
-   Player Count + Player List
-============================================================ */
+// Player count + list
 function watchPlayerCount(roomId) {
   const playersRef = collection(db, "rooms", roomId, "players");
   const outputCount = document.getElementById("playerCount");
@@ -225,9 +186,7 @@ function watchPlayerCount(roomId) {
   });
 }
 
-/* ============================================================
-   Stop Button
-============================================================ */
+// Stop Button
 document.getElementById("stopBtn").addEventListener("click", async () => {
   const params = new URLSearchParams(window.location.search);
   const roomId = params.get("room");
@@ -238,7 +197,11 @@ document.getElementById("stopBtn").addEventListener("click", async () => {
   const roomRef = doc(db, "rooms", roomId);
   isTerminating = true;
 
-  await setDoc(roomRef, { winner: playerName, status: "closed" }, { merge: true });
+  await setDoc(
+    roomRef,
+    { winner: playerName, status: "closed" },
+    { merge: true }
+  );
 
   setTimeout(async () => {
     try {
@@ -250,15 +213,12 @@ document.getElementById("stopBtn").addEventListener("click", async () => {
 
   if (!hasRedirected) {
     hasRedirected = true;
-    showCustomAlert("⚔️ Clash Ended", "The host has ended the clash.", () => {
-      window.location.href = "index.html";
-    });
+    alert("Clash ended by host");
+    window.location.href = "index.html";
   }
 });
 
-/* ============================================================
-   Start
-============================================================ */
+// Start
 const params = new URLSearchParams(window.location.search);
 const roomId = params.get("room");
 loadRoom(roomId);
