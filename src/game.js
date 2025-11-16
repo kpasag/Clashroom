@@ -8,6 +8,24 @@ import {
   setDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+function showCustomAlert(title, message, callback) {
+  const modal = document.getElementById("customAlert");
+  const alertTitle = document.getElementById("alertTitle");
+  const alertMsg = document.getElementById("alertMsg");
+  const alertBtn = document.getElementById("alertBtn");
+
+  alertTitle.innerText = title;
+  alertMsg.innerText = message;
+
+  modal.classList.remove("hidden");
+
+  alertBtn.onclick = () => {
+    modal.classList.add("hidden");
+    if (callback) callback();
+  };
+}
+
+
 let isTerminating = false;
 let hasRedirected = false;
 
@@ -40,9 +58,16 @@ async function terminateRoom() {
 
   if (!hasRedirected) {
     hasRedirected = true;
-    alert("Bingo! You have Won");
-    window.location.href = "index.html";
+
+    showCustomAlert(
+      "Bingo!",
+      "You have won the clash!",
+      () => {
+        window.location.href = "index.html";
+      }
+    );
   }
+
 }
 
 // Check if room deleted or someone wins
@@ -54,8 +79,15 @@ function watchRoomExistence(roomId) {
     if (!snapshot.exists()) {
       if (!isTerminating && !hasRedirected) {
         hasRedirected = true;
-        alert("You lost!");
-        window.location.href = "index.html";
+        showCustomAlert(
+          "You lost.",
+          "The room was closed by the host.",
+          () => {
+            window.location.href = "index.html";
+          }
+        );
+
+
       }
       return;
     }
@@ -63,8 +95,13 @@ function watchRoomExistence(roomId) {
     const data = snapshot.data();
     if (data?.winner && !isTerminating && !hasRedirected) {
       hasRedirected = true;
-      alert(`You lost! ${data.winner} won.`);
-      window.location.href = "index.html";
+      showCustomAlert(
+        "You lost.",
+        `${data.winner} won the clash.`,
+        () => {
+          window.location.href = "index.html";
+        }
+      );
     }
   });
 }
@@ -114,7 +151,7 @@ function generateBoard(phrases, gridSize) {
   selected.forEach((text) => {
     const card = document.createElement("div");
     card.className =
-      "bingo-card bg-blue-100 border border-blue-300 rounded-lg p-6 w-44 h-44 flex justify-center items-center text-center cursor-pointer transition hover:bg-blue-200";
+      "bingo-card font-sans bg-blue-100 border border-blue-300 rounded-lg p-6 w-44 h-44 flex justify-center items-center text-center cursor-pointer transition hover:bg-blue-200";
     card.innerText = text;
 
     card.addEventListener("click", () => {
